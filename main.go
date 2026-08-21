@@ -15,5 +15,9 @@ func main() {
 	output, err := cmd.CombinedOutput()
 
 	fmt.Printf("Output: %s", output)
-	fmt.Printf("Error: %v\n", err)
+
+	if err != nil {
+		fmt.Printf("Error type: %T\n", err)
+		fmt.Printf("Error: %v\n", err)
+	}
 }
