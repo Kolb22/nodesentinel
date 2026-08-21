@@ -3,7 +3,30 @@ package main
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 )
+
+type ServiceStatus string
+
+const (
+	StatusActive   ServiceStatus = "active"
+	StatusInactive ServiceStatus = "inactive"
+	StatusFailed   ServiceStatus = "failed"
+	StatusUnknown  ServiceStatus = "unknown"
+)
+
+func parseServiceStatus(output string) ServiceStatus {
+	switch output {
+	case "active":
+		return StatusActive
+	case "inactive":
+		return StatusInactive
+	case "failed":
+		return StatusFailed
+	default:
+		return StatusUnknown
+	}
+}
 
 func main() {
 	cmd := exec.Command(
@@ -14,10 +37,25 @@ func main() {
 
 	output, err := cmd.CombinedOutput()
 
-	fmt.Printf("Output: %s", output)
+	rawStatus := strings.TrimSpace(string(output))
+	status := parseServiceStatus(rawStatus)
+
+	fmt.Printf("Service: nginx\n")
+	fmt.Printf("Status: %s\n", status)
 
 	if err != nil {
-		fmt.Printf("Error type: %T\n", err)
-		fmt.Printf("Error: %v\n", err)
+		exitError, ok := err.(*exec.ExitError)
+
+		if ok {
+			fmt.Printf(
+				"Exit Code: %d\n",
+				exitError.ExitCode(),
+			)
+		} else {
+			fmt.Printf(
+				"Unexpected error: %v\n",
+				err,
+			)
+		}
 	}
 }
