@@ -1,7 +1,19 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os/exec"
+)
 
 func main() {
-	fmt.Println("NodeSentinel lab environment ready")
+	cmd := exec.Command(
+		"systemctl",
+		"is-active",
+		"nginx",
+	)
+
+	output, err := cmd.CombinedOutput()
+
+	fmt.Printf("Output: %s", output)
+	fmt.Printf("Error: %v\n", err)
 }
