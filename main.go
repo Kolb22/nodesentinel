@@ -10,11 +10,37 @@ type LoadState string
 type ActiveState string
 type SubState string
 
+const (
+	LoadStateLoaded   LoadState = "loaded"
+	LoadStateNotFound LoadState = "not-found"
+)
+
+const (
+	ActiveStateActive   ActiveState = "active"
+	ActiveStateInactive ActiveState = "inactive"
+	ActiveStateFailed   ActiveState = "failed"
+)
+
+const (
+	SubStateRunning SubState = "running"
+	SubStateDead    SubState = "dead"
+	SubStateFailed  SubState = "failed"
+)
+
 type ServiceStatus struct {
 	Name        string
 	LoadState   LoadState
 	ActiveState ActiveState
 	SubState    SubState
+}
+
+func (s ServiceStatus) Exists() bool {
+	return s.LoadState == LoadStateLoaded
+}
+
+func (s ServiceStatus) IsRunning() bool {
+	return s.ActiveState == ActiveStateActive &&
+		s.SubState == SubStateRunning
 }
 
 func main() {
@@ -69,4 +95,6 @@ func main() {
 	fmt.Printf("Load State: %s\n", status.LoadState)
 	fmt.Printf("Active State: %s\n", status.ActiveState)
 	fmt.Printf("Sub State: %s\n", status.SubState)
+	fmt.Printf("Exists: %t\n", status.Exists())
+	fmt.Printf("Running: %t\n", status.IsRunning())
 }
