@@ -6,56 +6,67 @@ import (
 	"strings"
 )
 
-type ServiceStatus string
+type LoadState string
+type ActiveState string
+type SubState string
 
-const (
-	StatusActive   ServiceStatus = "active"
-	StatusInactive ServiceStatus = "inactive"
-	StatusFailed   ServiceStatus = "failed"
-	StatusUnknown  ServiceStatus = "unknown"
-)
-
-func parseServiceStatus(output string) ServiceStatus {
-	switch output {
-	case "active":
-		return StatusActive
-	case "inactive":
-		return StatusInactive
-	case "failed":
-		return StatusFailed
-	default:
-		return StatusUnknown
-	}
+type ServiceStatus struct {
+	Name        string
+	LoadState   LoadState
+	ActiveState ActiveState
+	SubState    SubState
 }
 
 func main() {
+	serviceName := "nginx"
+
 	cmd := exec.Command(
 		"systemctl",
-		"is-active",
-		"nginx",
+		"show",
+		serviceName,
+		"--property=LoadState",
+		"--property=ActiveState",
+		"--property=SubState",
 	)
 
 	output, err := cmd.CombinedOutput()
 
-	rawStatus := strings.TrimSpace(string(output))
-	status := parseServiceStatus(rawStatus)
-
-	fmt.Printf("Service: nginx\n")
-	fmt.Printf("Status: %s\n", status)
-
 	if err != nil {
-		exitError, ok := err.(*exec.ExitError)
+		fmt.Printf("failed to inspect service: %v\n", err)
+		return
+	}
 
-		if ok {
-			fmt.Printf(
-				"Exit Code: %d\n",
-				exitError.ExitCode(),
-			)
-		} else {
-			fmt.Printf(
-				"Unexpected error: %v\n",
-				err,
-			)
+	status := ServiceStatus{
+		Name: serviceName,
+	}
+
+	lines := strings.Split(string(output), "\n")
+
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		key, value, found := strings.Cut(line, "=")
+
+		if !found {
+			continue
+		}
+
+		switch key {
+		case "LoadState":
+			status.LoadState = LoadState(value)
+
+		case "ActiveState":
+			status.ActiveState = ActiveState(value)
+
+		case "SubState":
+			status.SubState = SubState(value)
 		}
 	}
+
+	fmt.Printf("Service: %s\n", status.Name)
+	fmt.Printf("Load State: %s\n", status.LoadState)
+	fmt.Printf("Active State: %s\n", status.ActiveState)
+	fmt.Printf("Sub State: %s\n", status.SubState)
 }
